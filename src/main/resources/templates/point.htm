@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="The Page Description">
+    <style type="text/css">@-ms-viewport {
+        width: device-width;
+    }</style>
+    <title>DevIT</title>
+
+    <!-- JS -->
+    <script
+            src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous"
+    ></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+            integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+            crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+            integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+            crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css"
+          integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://s3.ap-northeast-2.amazonaws.com/devit.shop/css/layers.min.css" media="screen">
+    <link rel="stylesheet" href="https://s3.ap-northeast-2.amazonaws.com/devit.shop/css/board.css" media="screen">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="https://s3.ap-northeast-2.amazonaws.com/devit.shop/js/header.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+    <style>
+        .alert {
+            background-color: #E3F6CE;
+            width: 100%;
+            padding: 10px;
+            color: #0B6121;;
+        }
+
+        .nopoint-alert {
+            background-color: #FBEFF2;
+            width: 100%;
+            height: 35px;
+            color: #F7819F;
+        }
+
+        .point-alert {
+            background-color: #EFF2FB;
+            width: 100%;
+            padding: 10px;
+            color: #819FF7;
+        }
+
+        .alert-text {
+            width: max-content;
+            margin: auto;
+        }
+
+        .icon {
+            margin-right: 10px;
+        }
+
+        .profile {
+            margin: 50px;
+        }
+
+        .big-text {
+            font-size: 20px
+        }
+
+        .general-text {
+            font-size: 15px
+        }
+
+        .calender {
+            margin-top: 10px;
+        }
+
+        .search {
+            margin-left: 10px;
+            margin-top: 13px;
+        }
+
+        .search-form {
+            height: 60px;
+            margin: 0 50px 50px;
+        }
+
+        .charge {
+            background-color: #EFF8FB;
+        }
+
+        .down {
+            background-color: #FBEFEF;
+        }
+
+        .pagination {
+            margin-bottom: 50px;
+        }
+
+        .header {
+            width: 100%;
+        }
+
+        .logo {
+            height: 50px;
+        }
+    </style>
+
+    <script>
+        $(document).ready(function () {
+            $('#logout-alert').prop('hidden', true);
+            $('#token-login-alert').prop('hidden', true);
+            $('#nopoint-alert').prop('hidden', true);
+            $('#point-alert').prop('hidden', true);
+
+            let token = header_get_token();
+            let userInfo = parse_jwt(token);
+            $('#name').text(`사용자 이름 : ${userInfo["nickName"]}`);
+            $('#email').text(`사용자 이메일 : ${userInfo["email"]}`);
+
+            let params = new URLSearchParams(window.location.search);
+            let page = 1;
+            if (params.get('page') != null) {
+                page = parseInt(params.get("page"));
+            }
+            getUserPoint();
+            getUserPointRecords(page);
+            calendarSet();
+        });
+
+        function calendarSet() {
+            let now_utc = Date.now()
+            let timeOff = new Date().getTimezoneOffset() * 60000;
+            let today = new Date(now_utc - timeOff).toISOString().split("T")[0];
+            let fromRegDt = document.getElementById("fromRegDt");
+            fromRegDt.setAttribute("max", today);
+            let toRegDt = document.getElementById("toRegDt");
+            toRegDt.setAttribute("max", today);
+        }
+
+        function getUserPoint() {
+            let token = header_get_token();
+            $.ajax({
+                type: "GET",
+                url: 'https://devit-backend.shop/api/payment/points',
+                data: {},
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("Authorization", token);
+                },
+                success: function (response) {
+                    let point = response['data']['point'];
+                    console.log(point)
+                    $('#user-point').text(`사용 가능 포인트 : ${point}`);
+                },
+                error: function (response) {
+                    console.log(response)
+                }
+            })
+        }
+
+        function getUserPointRecords(page) {
+            let token = header_get_token();
+            let fromRegDt = $('#fromRegDt').val();
+            let toRegDt = $('#toRegDt').val();
+            let url = `https://devit-backend.shop/api/payment/points/record?page=${page}&pageSize=10&sort=createdAt,desc`;
+
+            if (fromRegDt !== "" && toRegDt !== "") {
+                url += `&fromRegDt=${fromRegDt}&toRegDt=${toRegDt}`;
+            }
+
+            console.log(url);
+
+            $.ajax({
+                type: "GET",
+                url: url,
+                data: {},
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("Authorization", token);
+                },
+                success: function (response) {
+                    $('#button-list').empty();
+                    $('#record-body').empty();
+                    let data = response['data'];
+                    let content = data['content'];
+
+                    for (let i = 0; i < content.length; i++) {
+                        let tmp_html = '';
+
+                        let createdAt = content[i]["createdAt"];
+                        createdAt = moment(createdAt).format('YYYY-MM-DD HH:mm:ss');
+                        let index = (10 * (page - 1)) + (i + 1);
+                        if (content[i]["type"] === "CHARGE") {
+                            tmp_html = `
+                            <tr class="charge">
+                                <th scope="row">${index}</th>
+                                <td>${content[i]["existingPoint"]} P</td>
+                                <td>충전</td>
+                                <td>${content[i]["amount"]} P &nbsp;&nbsp;<i class="fa fa-angle-double-up" aria-hidden="true"></i></td>
+                                <td>${content[i]["remainingPoint"]} P</td>
+                                <td>${createdAt}</td>
+                            </tr>
+                        `;
+                        } else {
+                            tmp_html = `
+                            <tr class="down">
+                                <th scope="row">${index}</th>
+                                <td>${content[i]["existingPoint"]} P</td>
+                                <td>사용</td>
+                                <td>${content[i]["amount"]} P&nbsp;&nbsp;<i class="fa fa-angle-double-down" aria-hidden="true"></i></td>
+                                <td>${content[i]["remainingPoint"]} P</td>
+                                <td>${createdAt}</td>
+                            </tr>
+                        `;
+                        }
+                        $('#record-body').append(tmp_html);
+                    }
+
+                    let total = response["data"]["totalElements"];
+                    let pageSize = 10;
+
+                    let tmp_html = `<button type="button" class="btn btn-white" onclick="prePage()" id="pre-button" disabled><</button>`
+                    $('#button-list').append(tmp_html)
+
+                    let page_list = total / (pageSize + 1);
+                    for (let i = 1; i <= page_list + 1; i++) {
+                        let tmp_html = `
+                        <button type="button" class="btn btn-white" onclick="movePage(${i})" id="page-button-${i}">${i}</button>
+                        `;
+                        $('#button-list').append(tmp_html);
+                    }
+
+                    tmp_html = `<button type="button" class="btn btn-white" onclick="nextPage()" id="next-button">></button>`
+                    $('#button-list').append(tmp_html)
+
+                    let button_list_size = 40 * (page_list + 3)
+                    $('.pagination').css({'margin': 'auto', 'width': `${button_list_size}px`, 'display': 'block'})
+
+                    $(`#page-button-${page}`).prop('disabled', true);
+
+                    // 페이지 이동 버튼 활성화/비활성화
+                    if (parseInt(page) === 1) {
+                        $('#pre-button').prop('disabled', true);
+
+                    } else {
+                        $('#pre-button').prop('disabled', false);
+                    }
+
+                    if (parseInt(total) <= parseInt(page) * parseInt(pageSize)) {
+                        $('#next-button').prop('disabled', true);
+                    } else {
+                        $('#next-button').prop('disabled', false);
+                    }
+                },
+                error: function (response) {
+                    console.log(response)
+                }
+            })
+        }
+
+        function nextPage() {
+            let params = new URLSearchParams(window.location.search);
+            let page = 1;
+            if (params.get('page') != null) {
+                page = parseInt(params.get("page")) + 1;
+            }
+            location.href = `/point?page=${page}`;
+
+        }
+
+        function prePage() {
+            let params = new URLSearchParams(window.location.search);
+            let page = parseInt(params.get("page")) - 1;
+            location.href = `/point?page=${page}`;
+        }
+
+        function movePage(page) {
+            location.href = `/point?page=${page}`;
+        }
+
+        function comma(str) {
+            str = String(str);
+            return str.replace(/(\d)(?=(?:\d{3})+(?!\d))/g, '$1,');
+        }
+
+        function uncomma(str) {
+            str = String(str);
+            return str.replace(/[^\d]+/g, '');
+        }
+
+        function inputNumberFormat(obj) {
+            obj.value = comma(uncomma(obj.value));
+        }
+
+        function onlynumber(str) {
+            str = String(str);
+            return str.replace(/(\d)(?=(?:\d{3})+(?!\d))/g, '$1');
+        }
+
+        function charge() {
+            let amount = $('#amount').val();
+
+            if (amount === undefined || amount === "") {
+                $('#nopoint-alert').prop('hidden', false);
+                setTimeout(function () {
+                    $('#nopoint-alert').prop('hidden', true);
+                }, 2000);
+            }
+            else {
+                let chargeData = {
+                    "type": "CHARGE",
+                    "amount": amount
+                }
+
+                let token = header_get_token();
+
+                $.ajax({
+                    type: "PUT",
+                    url: "https://devit-backend.shop/api/payment/points",
+                    contentType: "application/json",
+                    data: JSON.stringify(chargeData),
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("Authorization", token);
+                    },
+                    success: function (response) {
+                        $("#staticBackdrop").modal('hide');
+                        $('#amount').val("");
+                    },
+                    error: function (response) {
+                        alert("포인트 충전에 실패하였습니다. 관리자에게 문의주세요");
+                        console.log(response)
+                    }
+                })
+
+                window.location.href = "/point";
+
+                $('#point-alert').prop('hidden', false);
+                setTimeout(function () {
+                    $('#point-alert').prop('hidden', true);
+                }, 2000);
+            }
+        }
+
+    </script>
+</head>
+<body class="search list-style">
+<header class="header">
+    <div class="alert" role="alert" id="token-login-alert">
+        <p class="alert-text">로그인이 풀렸습니다. 다시 로그인해주세요.</p>
+    </div>
+    <div class="alert" role="alert" id="logout-alert">
+        <p class="alert-text">로그아웃이 완료되었습니다.</p>
+    </div>
+    <div class="point-alert" role="alert" id="point-alert">
+        <p class="alert-text">충전이 완료되었습니다.</p>
+    </div>
+    <div class="nav-inner row-content buffer-left buffer-right even clear-after">
+        <div id="brand" style="float:left; display: flex; width: 200px">
+            <img src="https://s3.ap-northeast-2.amazonaws.com/devit.shop/images/header-logo.png" alt="logo" class="logo"/>
+        </div><!-- brand -->
+        <nav>
+            <ul class="reset" role="navigation">
+                <li class="menu-item icon">
+                    <a href="https://www.devit.shop/board"><i class="fa fa-home icon" aria-hidden="true"></i> Home</a>
+                </li>
+                <li class="menu-item icon">
+                    <a href="https://www.devit.shop/point"><i class="fa fa-krw" aria-hidden="true"></i> POINT</a>
+                </li>
+                <li class="menu-item icon">
+                    <a href="https://www.devit.shop/profile"><i class="fa fa-user icon" aria-hidden="true"></i> 프로필</a>
+                </li>
+                <li class="menu-item icon" id="general">
+                    <a onclick="logout()"><i class="fa fa-sign-out icon" aria-hidden="true"></i> 로그아웃</a>
+                </li>
+            </ul>
+        </nav>
+    </div><!-- row-content -->
+</header>
+<div>
+    <div class="card profile">
+        <div class="card-body">
+            <div class="card-text">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-sm">
+                            <p class="card-title big-text" id="name">사용자 이름 : </p>
+                            <p style="color : gray" class="card-text" id="email">사용자 이메일 : </p>
+                        </div>
+                        <div class="col-sm">
+                            <p class="card-title big-text" id="user-point">사용 가능 포인트 : </p>
+                            <button type="button" class="btn btn-primary" data-toggle="modal"
+                                    data-target="#staticBackdrop">
+                                포인트 충전하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="staticBackdrop" data-backdrop="static" data-keyboard="false" tabindex="-1"
+         aria-labelledby="staticBackdropLabel" aria-hidden="true" style="width: 350px; margin: 0 auto">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">포인트 충전하기</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="nopoint-alert" role="alert" id="nopoint-alert">
+                    <p class="alert-text">충전 금액을 입력해주세요.</p>
+                </div>
+                <div class="modal-body" style="float:left; display: flex; margin-top: 15px">
+                    충전 금액 (숫자)
+                    <label>
+                        <input id="amount" style="margin-left: 15px" type="text" maxlength="15"
+                               onkeyup="inputNumberFormat(this);"/>
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">종료</button>
+                    <button type="button" class="btn btn-primary" onclick="charge()">충전</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="search-form" style="float: left; width: 100%; display: flex">
+        <p class="big-text" style="margin-left: 10px">POINT 기록</p>
+        <a href="/payment" class="general-text" style="margin-left: 10px; margin-top: 18px">결제 기록 확인하러 가기&nbsp;<i class="fa fa-arrow-right" aria-hidden="true"></i></a>
+        <div style="float: left; display: flex; margin-left: 50%; margin-right: 5%">
+            <div class="calender">
+                <label for="fromRegDt"></label><input type="date" id="fromRegDt" name="fromRegDt">
+            </div>
+            <p class="general-text" style="margin-top: 15px;">&nbsp;&nbsp;&nbsp;~&nbsp;&nbsp;&nbsp;</p>
+            <div class="calender">
+                <label for="toRegDt"></label><input type="date" id="toRegDt" name="toRegDt">
+            </div>
+            <a href="#" class="btn btn-info" style="height: 35px; margin-left: 15px; margin-top: 10px"
+               onclick="getUserPointRecords(1)">
+                <i class="fa fa-search" style="margin-right: 5px" aria-hidden="true"></i>검색
+            </a>
+        </div>
+    </div>
+    <div class="profile">
+        <table class="table">
+            <thead class="thead-light">
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">지난 포인트</th>
+                <th scope="col">충전/사용</th>
+                <th scope="col">포인트 변동</th>
+                <th scope="col">보유 포인트</th>
+                <th scope="col">날짜</th>
+            </tr>
+            </thead>
+            <tbody id="record-body">
+            </tbody>
+        </table>
+    </div>
+    <div id='button-list' class="button-group pagination">
+    </div>
+</div>
+
+<footer>
+    <div class="row" style="margin-left: 5%">
+        <div class="row-content buffer clear-after ">
+            <section id="top-footer">
+                <div class="box">
+                    <div class="widget column"><!-- la class="widget" è forse generata utomaticamente da wp -->
+                        <h4>김지호</h4>
+                        <ul class="plain">
+                            <li><a href="">jeehp0102@naver.com</a></li>
+                            <li><a href="https://github.com/kimziaco">https://github.com/kimziaco</a></li>
+                            <li><a href="https://prod.velog.io/@jeeho102">https://prod.velog.io/@jeeho102</a></li>
+                        </ul>
+                    </div>
+                    <div class="widget column">
+                        <h4>김대희</h4>
+                        <ul class="plain">
+                            <li><a href="#">1998opening@gmail.com</a></li>
+                            <li><a href="https://github.com/eet43">https://github.com/eet43</a></li>
+                            <li><a href="https://daisyit.tistory.com/">https://daisyit.tistory.com/</a></li>
+                        </ul>
+                    </div>
+                    <div class="widget column">
+                        <h4>이다혜</h4>
+                        <ul class="plain">
+                            <li><a href="#">dahae80912@gmail.com</a></li>
+                            <li><a href="https://github.com/ekgpgdi">https://github.com/ekgpgdi</a></li>
+                            <li><a href="https://ddori-lee.tistory.com/">https://ddori-lee.tistory.com/</a></li>
+                        </ul>
+                    </div>
+                    <div class="widget column">
+                        <ul class="plain">
+                            <h4>느낌있조</h4>
+                            <li><i class="fa fa-github" aria-hidden="true"></i><a href="https://github.com/smRLadlTwh">
+                                https://github.com/smRLadlTwh</a></li>
+                            <li><i class="fa fa-envelope-o" aria-hidden="true"></i><a href=""> smRladlTwh@gmail.com</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section><!-- top-footer -->
+            <section id="bottom-footer">
+                <p class="keep-left">&copy; 2022 느낌있조</p>
+            </section><!-- bottom-footer -->
+        </div><!-- row-content -->
+    </div><!-- row -->
+</footer>
+</body>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+
+    <script src="https://s3.ap-northeast-2.amazonaws.com/devit.shop/js/header.js"></script>
+
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-size: 11px;
+        }
+        .chat_list_wrap {
+            list-style: none;
+        }
+        .chat_list_wrap .header1 {
+            font-size: 14px;
+            padding: 15px 0;
+            background: #2A3EB2;
+            color: white;
+            text-align: center;
+            font-family: "Josefin Sans", sans-serif;
+        }
+        .chat_list_wrap .search {
+            background: #eee;
+            padding: 5px;
+        }
+        .chat_list_wrap .search input[type="text"] {
+            width: 100%;
+            border-radius: 4px;
+            padding: 5px 0;
+            border: 0;
+            text-align: center;
+        }
+        .chat_list_wrap .list {
+            padding: 0 16px;
+        }
+        .chat_list_wrap .list ul {
+            width: 100%;
+            list-style: none;
+            margin-top: 3px;
+        }
+        .chat_list_wrap .list ul li {
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        .chat_list_wrap .list ul li table {
+            width: 100%;
+        }
+        .chat_list_wrap .list ul li table td.profile_td {
+            width: 50px;
+            padding-right: 11px;
+        }
+
+        .chat_list_wrap .list ul li table td.profile_td img {
+            width: 50px;
+            height: auto;
+        }
+
+        .chat_list_wrap .list ul li table td.chat_td .email {
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .chat_list_wrap .list ul li table td.time_td {
+            width: 90px;
+            text-align: center;
+        }
+
+        .chat_list_wrap .list ul li table td.time_td .time {
+            padding-bottom: 4px;
+        }
+
+        .chat_list_wrap .list ul li table td.time_td .check p {
+            width: 5px;
+            height: 5px;
+            margin: 0 auto;
+            -webkit-border-radius: 50%;
+            -moz-border-radius: 50%;
+            border-radius: 50%;
+            background: #e51c23;
+        }
+
+
+
+        .alert {
+            background-color: #E3F6CE;
+            width: 100%;
+            padding: 10px;
+            color: #0B6121;;
+        }
+
+        .nopoint-alert {
+            background-color: #FBEFF2;
+            width: 100%;
+            height: 35px;
+            color: #F7819F;
+        }
+
+        .point-alert {
+            background-color: #EFF2FB;
+            width: 100%;
+            padding: 10px;
+            color: #819FF7;
+        }
+
+        .alert-text {
+            width: max-content;
+            margin: auto;
+        }
+
+        .icon {
+            margin-right: 10px;
+        }
+
+        .profile {
+            margin: 50px;
+        }
+
+        .big-text {
+            font-size: 20px
+        }
+
+        .general-text {
+            font-size: 15px
+        }
+
+        .calender {
+            margin-top: 10px;
+        }
+
+        .search {
+            margin-left: 10px;
+            margin-top: 13px;
+        }
+
+        .search-form {
+            height: 60px;
+            margin: 0 50px 50px;
+        }
+
+        .charge {
+            background-color: #EFF8FB;
+        }
+
+        .down {
+            background-color: #FBEFEF;
+        }
+
+        .pagination {
+            margin-bottom: 50px;
+        }
+
+        .header {
+            width: 100%;
+        }
+
+        .logo {
+            height: 50px;
+        }
+    </style>
+    <script>
+
+        $(document).ready(function () {
+            $('#logout-alert').prop('hidden', true);
+            $('#token-login-alert').prop('hidden', true);
+            $('#nopoint-alert').prop('hidden', true);
+            $('#point-alert').prop('hidden', true);
+        });
+
+        $(function () {
+            $('#chat-list').empty();
+
+            var token = localStorage.getItem("Authorization");
+
+            let userInfo = parseJwt();
+            let userId = userInfo['uuid']
+            let nickName = userInfo['nickName']
+            let roomName = null;
+            let temp_html = null;
+
+            $.ajax({
+                type: "GET",
+                url: "/rooms", //후에 바뀌어야함
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("Authorization", token);
+                },
+                data: {},
+                success: function (response) {
+                    console.log(response)
+                    console.log(response['data'])
+                    let room = response['data'] //JSON 화 시켜주기
+                    console.log(room);
+
+                    if (room.length) {
+                        for (let i = 0; i < room.length; i++) {
+                            if (nickName === room[i]['senderName']) {
+                                temp_html = `
+                        <li onclick="enterRoom('${room[i]['roomId']}')">
+                            <table cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td class="profile_td">
+                                        <!--Img-->
+<!--                                        <img src="./images/profile_preview.png"/>-->
+                                    </td>
+                                    <td class="chat_td">
+                                        <!--Email & Preview-->
+                                        <div class="email">
+                                            ${room[i]['receiverName']}
+                                        </div>
+                                    </td>
+                                    <td class="time_td">
+                                        <!--Time & Check-->
+                                        <div class="time">
+                                        </div>
+                                        <div class="check">
+                                            <p></p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </li>`
+                            } else {
+                                temp_html = `
+                        <li onclick="enterRoom('${room[i]['roomId']}')">
+                            <table cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td class="profile_td">
+                                        <!--Img-->
+<!--                                        <img src="./images/profile_preview.png"/>-->
+                                    </td>
+                                    <td class="chat_td">
+                                        <!--Email & Preview-->
+                                        <div class="email">
+                                            ${room[i]['senderName']}
+                                        </div>
+                                        <div class="chat_preview">
+                                            안녕하세요~
+                                        </div>
+                                    </td>
+                                    <td class="time_td">
+                                        <!--Time & Check-->
+                                        <div class="time">
+                                        </div>
+                                        <div class="check">
+                                            <p></p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </li>`
+
+                            }
+                            console.log(room[i])
+                            $('#chat-list').append(temp_html);
+                        }
+                    }
+
+                }
+            })
+        })
+
+        function enterRoom(item) {
+            console.log(item)
+            localStorage.setItem('roomId', item)
+            location.href = "/detail?roomId=" + item;
+        }
+
+        function parseJwt() {
+            let token = localStorage.getItem("Authorization");
+            let base64Url = token.split('.')[1];
+            let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            let jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            return JSON.parse(jsonPayload);
+        }
+    </script>
+
+</head>
+
+<body>
+<div class="chat_list_wrap">
+    <header class="header">
+        <div class="alert" role="alert" id="token-login-alert">
+            <p class="alert-text">로그인이 풀렸습니다. 다시 로그인해주세요.</p>
+        </div>
+        <div class="alert" role="alert" id="logout-alert">
+            <p class="alert-text">로그아웃이 완료되었습니다.</p>
+        </div>
+        <div class="point-alert" role="alert" id="point-alert">
+            <p class="alert-text">충전이 완료되었습니다.</p>
+        </div>
+        <div class="nav-inner row-content buffer-left buffer-right even clear-after">
+            <div id="brand" style="float:left; display: flex; width: 200px">
+                <img src="https://s3.ap-northeast-2.amazonaws.com/devit.shop/images/header-logo.png" alt="logo"
+                     class="logo"/>
+            </div><!-- brand -->
+            <nav>
+                <ul class="reset" role="navigation">
+                    <li class="menu-item icon">
+                        <a href="https://www.devit.shop/board"><i class="fa fa-home icon" aria-hidden="true"></i>
+                            Home</a>
+                    </li>
+                    <li class="menu-item icon">
+                        <a href="https://www.devit.shop/point"><i class="fa fa-krw" aria-hidden="true"></i> POINT</a>
+                    </li>
+                    <li class="menu-item icon">
+                        <a href="https://www.devit.shop/profile"><i class="fa fa-user icon" aria-hidden="true"></i> 프로필</a>
+                    </li>
+                    <li class="menu-item icon" id="general">
+                        <a onclick="logout()"><i class="fa fa-sign-out icon" aria-hidden="true"></i> 로그아웃</a>
+                    </li>
+                </ul>
+            </nav>
+        </div><!-- row-content -->
+    </header>
+    <div class="header1">
+        채팅방
+    </div>
+    <div class="list">
+        <ul id="chat-list">
+        </ul>
+    </div>
+</div>
+</body>
+</html>

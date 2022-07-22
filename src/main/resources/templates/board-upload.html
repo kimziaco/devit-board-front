@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="The Page Description">
+    <style type="text/css">@-ms-viewport {
+        width: device-width;
+    }</style>
+    <title>DevIT</title>
+
+    <!-- JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://s3.ap-northeast-2.amazonaws.com/devit.shop/css/layers.min.css" media="screen">
+    <link rel="stylesheet" href="https://s3.ap-northeast-2.amazonaws.com/devit.shop/css/board.css" media="screen">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="https://s3.ap-northeast-2.amazonaws.com/devit.shop/js/header.js"></script>
+    <script src="https://s3.ap-northeast-2.amazonaws.com/devit.shop/js/includeHTML.js"></script>
+    <script src="https://s3.ap-northeast-2.amazonaws.com/devit.shop/js/includeRouter.js"></script>
+
+    <style>
+        * {
+            font-family: 'Do Hyeon', sans-serif;
+        }
+
+        .write-form {
+            width: 60%;
+            background-color: white;
+            border: 2px #337ab7 solid;
+            margin: auto auto 20px auto;
+        }
+
+        .table-box {
+            width: 90%;
+            margin-left: 5%;
+        }
+
+        table.table td > input, td > textarea {
+            width: 100%;
+        }
+
+        .top {
+            width: 60%;
+            margin: 20px auto 0px auto;
+            background-color: #337ab7;
+            height: 40px;
+            padding: 5px;
+        }
+
+        .top-text {
+            color: white;
+            width: max-content;
+            margin: auto;
+            display: block;
+            font-family: 'Do Hyeon', sans-serif;
+        }
+
+        .upload-button {
+            width: 300px;
+            margin-bottom: 20px;
+            float: right;
+            margin-top: 10px;
+            padding: 0;
+            background-color: transparent;
+            margin-right: 10px;
+        }
+
+        .upload-button:hover {
+            background-color: transparent;
+        }
+
+        .upload-button > button {
+            width: 300px;
+            height: 50px;
+            background-color: #337ab7;
+            border: 0;
+            color: white;
+            font-size: 20px;
+            font-family: 'Do Hyeon', sans-serif;
+        }
+
+        .upload-button > button:hover {
+            width: 300px;
+            height: 50px;
+            background-color: gray;
+            border: 0;
+            color: white;
+            font-size: 20px;
+            font-family: 'Do Hyeon', sans-serif;
+        }
+
+        .alert {
+            background-color: #E3F6CE;
+            width: 100%;
+            padding: 10px;
+            color: #0B6121;;
+        }
+
+
+        .point-alert {
+            background-color: #EFF2FB;
+            width: 100%;
+            padding: 10px;
+            color: #819FF7;
+        }
+
+        .alert-text {
+            width: max-content;
+            margin: auto;
+        }
+
+        .icon {
+            margin-right: 10px;
+        }
+
+        .search {
+            margin-left: 10px;
+            margin-top: 13px;
+        }
+
+        .header {
+            width: 100%;
+        }
+
+        .logo {
+            height: 50px;
+        }
+
+    </style>
+
+    <script>
+
+        $(document).ready(function () {
+            $('#logout-alert').prop('hidden', true);
+            $('#token-login-alert').prop('hidden', true);
+            $('#nopoint-alert').prop('hidden', true);
+            $('#point-alert').prop('hidden', true);
+        });
+
+        function inputNumberFormat(obj) {
+            obj.value = comma(uncomma(obj.value));
+        }
+
+        function comma(str) {
+            str = String(str);
+            return str.replace(/(\d)(?=(?:\d{3})+(?!\d))/g, '$1,');
+        }
+
+        function uncomma(str) {
+            str = String(str);
+            return str.replace(/[^\d]+/g, '');
+        }
+
+
+        function enroll_board() {
+
+            let title = $('#title').val()
+            let price = $("#price").val()
+            let image = $('#image')[0].files[0]
+            let content = $("#content").val()
+            console.log(image);
+
+            let form_data = new FormData()
+            form_data.append("title", title)
+            form_data.append("price", price)
+
+            if (image !== undefined) {
+                form_data.append("image", image)
+            }
+
+            form_data.append("content", content)
+
+            let token1 = localStorage.getItem("Authorization");
+            console.log(token1)
+
+            let token = header_get_token();
+
+
+
+
+            $.ajax({
+                type: "POST",
+                url: "https://devit-backend.shop/api/boards/upload",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("Authorization", token);
+                },
+
+                data: form_data,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    console.log(response)
+                    if (response === "업로드성공") {
+                        location.href = "/board-upload-success";
+                    } else {
+                        location.href = "/board-update-fail";
+                    }
+                }
+                , error: function (response) {
+                    console.log(response);
+                },
+            });
+        }
+
+    </script>
+</head>
+
+<body class="search list-style">
+<header class="header">
+    <div class="alert" role="alert" id="token-login-alert">
+        <p class="alert-text">로그인이 풀렸습니다. 다시 로그인해주세요.</p>
+    </div>
+    <div class="alert" role="alert" id="logout-alert">
+        <p class="alert-text">로그아웃이 완료되었습니다.</p>
+    </div>
+    <div class="point-alert" role="alert" id="point-alert">
+        <p class="alert-text">충전이 완료되었습니다.</p>
+    </div>
+    <div class="nav-inner row-content buffer-left buffer-right even clear-after">
+        <div id="brand" style="float:left; display: flex; width: 200px">
+            <img src="https://s3.ap-northeast-2.amazonaws.com/devit.shop/images/header-logo.png" alt="logo"
+                 class="logo"/>
+        </div><!-- brand -->
+        <nav>
+            <ul class="reset" role="navigation">
+                <li class="menu-item icon">
+                    <a href="https://www.devit.shop/board"><i class="fa fa-home icon" aria-hidden="true"></i> Home</a>
+                </li>
+                <li class="menu-item icon">
+                    <a href="https://www.devit.shop/point"><i class="fa fa-krw" aria-hidden="true"></i> POINT</a>
+                </li>
+                <li class="menu-item icon">
+                    <a href="https://www.devit.shop/profile"><i class="fa fa-user icon" aria-hidden="true"></i> 프로필</a>
+                </li>
+                <li class="menu-item icon" id="general">
+                    <a onclick="logout()"><i class="fa fa-sign-out icon" aria-hidden="true"></i> 로그아웃</a>
+                </li>
+            </ul>
+        </nav>
+    </div><!-- row-content -->
+</header>
+<main role="main">
+    <div class="top">
+        <h3 class="top-text">게시글 작성하기</h3>
+    </div>
+    <div class="write-form">
+        <table class="table-box">
+            <tr class="tr">
+                <th>제목</th>
+                <td><input type="text" id="title"/></td>
+            </tr>
+            <tr>
+                <th>가격</th>
+                <td><input type="text" id="price" placeholder="원" onkeyup="inputNumberFormat(this)"/></td>
+            </tr>
+            <tr>
+                <th>사진</th>
+                <td><input type="file" id="image"/></td>
+            </tr>
+            <tr>
+                <th>내용</th>
+                <td><textarea type="text" id="content"></textarea></td>
+            </tr>
+        </table>
+        <div class="upload-button">
+            <button onclick="enroll_board()">게시글 등록</button>
+        </div>
+    </div>
+</main><!-- main -->
+<footer>
+    <div class="row" style="margin-left: 5%">
+        <div class="row-content buffer clear-after ">
+            <section id="top-footer">
+                <div class="box">
+                    <div class="widget column"><!-- la class="widget" è forse generata utomaticamente da wp -->
+                        <h4>김지호</h4>
+                        <ul class="plain">
+                            <li><a href="">jeehp0102@naver.com</a></li>
+                            <li><a href="https://github.com/kimziaco">https://github.com/kimziaco</a></li>
+                            <li><a href="https://prod.velog.io/@jeeho102">https://prod.velog.io/@jeeho102</a></li>
+                        </ul>
+                    </div>
+                    <div class="widget column">
+                        <h4>김대희</h4>
+                        <ul class="plain">
+                            <li><a href="#">1998opening@gmail.com</a></li>
+                            <li><a href="https://github.com/eet43">https://github.com/eet43</a></li>
+                            <li><a href="https://daisyit.tistory.com/">https://daisyit.tistory.com/</a></li>
+                        </ul>
+                    </div>
+                    <div class="widget column">
+                        <h4>이다혜</h4>
+                        <ul class="plain">
+                            <li><a href="#">dahae80912@gmail.com</a></li>
+                            <li><a href="https://github.com/ekgpgdi">https://github.com/ekgpgdi</a></li>
+                            <li><a href="https://ddori-lee.tistory.com/">https://ddori-lee.tistory.com/</a></li>
+                        </ul>
+                    </div>
+                    <div class="widget column">
+                        <ul class="plain">
+                            <h4>느낌있조</h4>
+                            <li><i class="fa fa-github" aria-hidden="true"></i><a href="https://github.com/smRLadlTwh">
+                                https://github.com/smRLadlTwh</a></li>
+                            <li><i class="fa fa-envelope-o" aria-hidden="true"></i><a href=""> smRladlTwh@gmail.com</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section><!-- top-footer -->
+            <section id="bottom-footer">
+                <p class="keep-left">&copy; 2022 느낌있조</p>
+            </section><!-- bottom-footer -->
+        </div><!-- row-content -->
+    </div><!-- row -->
+</footer>
+</body>
+<script>
+    includeHTML(function () {
+        includeRouter(function () {
+            // do something in the future
+        });
+    });
+</script>
+</html>

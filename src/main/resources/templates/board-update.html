@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+            integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+            crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+            integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+            crossorigin="anonymous"></script>
+    <script src="https://s3.ap-northeast-2.amazonaws.com/devit.shop/js/header.js"></script>
+
+    <title>수정하기</title>
+
+    <!--    font-->
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            font-family: 'Nanum Gothic', sans-serif;
+        }
+
+        .item-img {
+            width: 500px;
+            height: 400px;
+            background-image: url("https://devit-board.s3.ap-northeast-2.amazonaws.com/static/logo.png");
+            background-position: center;
+            background-size: cover;
+        }
+
+        .item-desc {
+            width: 500px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .item-order {
+            width: 500px;
+        }
+
+        .btn-order {
+            margin: auto;
+            width: 100px;
+
+            display: block;
+        }
+
+        .wrap {
+            width: 500px;
+            margin: auto;
+        }
+
+
+    </style>
+
+    <script>
+        $(document).ready(function () {
+        });
+
+        function inputNumberFormat(obj) {
+            obj.value = comma(uncomma(obj.value));
+        }
+
+        function comma(str) {
+            str = String(str);
+            return str.replace(/(\d)(?=(?:\d{3})+(?!\d))/g, '$1,');
+        }
+
+        function uncomma(str) {
+            str = String(str);
+            return str.replace(/[^\d]+/g, '');
+        }
+
+
+        function update() {
+
+            let params = new URLSearchParams(window.location.search);
+            var boardId = params.get('id')
+            console.log(boardId);
+
+            let title = $('#title').val()
+            let price = $("#price").val()
+            let image = $('#image')[0].files[0]
+            let content = $("#content").val()
+
+            console.log(title);
+            console.log(price);
+            console.log(content);
+            console.log(image);
+
+            let form_data = new FormData()
+            form_data.append("title", title)
+            form_data.append("price", price)
+
+            if (image !== undefined) {
+                form_data.append("image", image)
+            }
+            form_data.append("content", content)
+
+            let token1 = localStorage.getItem("Authorization");
+            console.log(token1)
+
+            let token = header_get_token();
+
+            $.ajax({
+                type: "POST",
+                url: "https://devit-backend.shop/api/boards/" + boardId,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("Authorization", token);
+                },
+                data: form_data,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+
+                    console.log(boardId)
+                    console.log(response)
+
+
+                    console.log(typeof (boardId));
+                    console.log(typeof (response));
+
+                    if (response === parseInt(boardId)) {
+                        location.href = "/board-update-success";
+                    } else {
+                        location.href = "/board-update-fail";
+                    }
+                }
+                , error: function (response) {
+                },
+            });
+        }
+
+
+    </script>
+</head>
+
+<body>
+
+<div class="wrap" >
+
+    <div class="item-img"></div>
+    <div class="item-desc">
+    </div>
+
+    <div class="item-order">
+
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text">제목</span>
+            </div>
+            <input type="text" id="title" class="form-control" aria-label="Default"
+                   aria-describedby="inputGroup-sizing-default"/>
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text">사진</span>
+            </div>
+            <input type="file" id="image"/>
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text">가격</span>
+            </div>
+            <input type="text" id="price" placeholder="원" onkeyup="inputNumberFormat(this)" class="form-control"
+                   aria-label="Default"
+                   aria-describedby="inputGroup-sizing-default">
+        </div>
+
+
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text">내용</span>
+                <div style="height: 300px; margin: 0px; display: inline-block"></div>
+            </div>
+            <input type="text" id="content" class="form-control" aria-label="Default"
+                   aria-describedby="inputGroup-sizing-default"
+                   cols="30" rows="5">
+        </div>
+
+
+        <button type="button" onclick="update()" class="btn btn-primary btn-order">수정하기</button>
+
+    </div>
+</div>
+</body>
+
+</html>
